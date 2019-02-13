@@ -1,0 +1,1 @@
+start "dl_sbs" cmd /c "F:\projetos\dl_subs\venv\Scripts\activate.bat & py F:\projetos\dl_subs\main.py"

@@ -2,12 +2,18 @@ from google import google
 import urllib.request
 import requests
 import shutil
+import re
+import os
+import zipfile
 
 
 URL = 'https://legendei.com/'
 
 
 class DownloadBot:
+
+    def __init__(self):
+        self.file_name = 'subs.zip'
 
     def get_url(self, search_param):
         results = google.search(search_param, 1)
@@ -30,13 +36,7 @@ class DownloadBot:
 
     def get_download_innerlink(self, html):
         print('getting inner download link')
-        start_index = html.find('dld5')
-        inner_link = ''
-        for i in range(start_index, len(html)):
-            if html[i] != '"':
-                inner_link += html[i]
-            else:
-                break
+        inner_link = re.search('dld5/\d+/', html).group()
         print('inner link found: ' + inner_link)
         return inner_link
 
@@ -53,7 +53,7 @@ class DownloadBot:
 
         r = requests.get(url, stream=True)
         if r.status_code == 200:
-            with open("sub.zip", 'wb') as f:
+            with open(self.file_name, 'wb') as f:
                 r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
 
@@ -62,3 +62,28 @@ class DownloadBot:
     def start(self, search_param):
         dl_link = self.get_download_link(search_param)
         self.download_file(dl_link)
+
+
+class FolderBot:
+
+    def __init__(self, path):
+        self.path = path
+        self.file_name = None
+
+    def get_video_file_name(self):
+        for f in os.listdir(self.path):
+            if re.match('.*\.(avi|flv|wmv|mov|mp4|mkv|rmvb)$', str(f)):
+                print('video file found: {}'.format(str(f)))
+                return str(f).rsplit('.', 1)[0]
+
+        print('cant find video file :(')
+
+    def extract_file(self):
+        zip_ref = zipfile.ZipFile(self.file_name, 'r')
+        zip_ref.extractall('')
+        zip_ref.close()
+
+    def start(self, file_name):
+        self.file_name = file_name
+        video_file_name = self.get_video_file_name()
+        self.extract_file()
